@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>راصد | استخبارات التهديدات السيبرانية — بث حي</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2l9 5v10l-9 5-9-5V7z' fill='none' stroke='%23ffb020' stroke-width='2'/><circle cx='12' cy='12' r='3' fill='%23ffb020'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Changa:wght@600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070c16; --panel:#0d1526; --panel2:#12203a;
+  --line:rgba(148,163,184,.13); --line2:rgba(148,163,184,.32);
+  --text:#e8eef8; --muted:#8b99b0;
+  --amber:#ffb020; --red:#ff4d5e; --orange:#ff9f43; --green:#2dd4a7; --cyan:#38bdf8; --yellow:#ffd166;
+  --fd:'Changa',sans-serif; --fb:'IBM Plex Sans Arabic',sans-serif; --fm:'IBM Plex Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);line-height:1.85;overflow-x:hidden}
+::selection{background:var(--amber);color:#14100a}
+::-webkit-scrollbar{width:10px}::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#22304a;border-radius:5px}::-webkit-scrollbar-thumb:hover{background:var(--amber)}
+a{color:inherit;text-decoration:none}
+button,input{font-family:inherit}
+:focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:4px}
+.mono{font-family:var(--fm);direction:ltr;unicode-bidi:embed}
+.en{direction:ltr;text-align:left;unicode-bidi:embed}
+.wrap{max-width:1240px;margin:0 auto;padding:0 1.4rem}
+.notch{clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px))}
+
+.bg-grid{position:fixed;inset:0;z-index:-3;
+  background-image:linear-gradient(rgba(56,189,248,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,.045) 1px,transparent 1px);
+  background-size:52px 52px;
+  mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,#000 40%,transparent 100%)}
+.bg-glow{position:fixed;z-index:-2;border-radius:50%;filter:blur(95px);opacity:.14;pointer-events:none}
+.g1{width:560px;height:560px;background:var(--amber);top:-220px;left:-160px}
+.g2{width:520px;height:520px;background:#0e7490;bottom:-200px;right:-140px}
+.scanlines{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:.04;
+  background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 4px)}
+
+/* الشريط العلوي + لوحة التشخيص */
+.topbar{border-bottom:1px solid var(--line);background:rgba(7,12,22,.9);backdrop-filter:blur(6px);position:sticky;top:0;z-index:50}
+.topbar-in{display:flex;align-items:center;gap:1.2rem;font-size:.74rem;padding:.45rem 1.4rem;color:var(--muted)}
+.live-dot{color:var(--green)}
+.live-dot::before{content:'●';animation:blink 1.4s infinite;margin-inline-end:.35rem}
+@keyframes blink{50%{opacity:.25}}
+.srcboard{display:flex;gap:.5rem;margin-inline-start:auto}
+.sb{display:inline-flex;align-items:center;gap:.45rem;border:1px solid var(--line);border-radius:99px;padding:.15rem .75rem;font-family:var(--fm);font-size:.64rem;direction:ltr;transition:border-color .3s}
+.sb i{width:7px;height:7px;border-radius:50%;background:#475569;transition:.3s}
+.sb em{font-style:normal;color:#5f6f8a;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb.wait i{background:var(--amber);animation:blink 1s infinite}
+.sb.try i{background:var(--cyan);animation:blink .7s infinite}
+.sb.try em{color:var(--cyan)}
+.sb.ok{border-color:rgba(45,212,167,.4)}
+.sb.ok i{background:var(--green);box-shadow:0 0 8px var(--green)}
+.sb.ok em{color:var(--green)}
+.sb.bad{border-color:rgba(255,77,94,.45)}
+.sb.bad i{background:var(--red);box-shadow:0 0 8px var(--red)}
+.sb.bad em{color:var(--red)}
+.refresh{background:none;border:1px solid var(--line2);color:var(--amber);border-radius:7px;padding:.22rem .9rem;font-size:.72rem;cursor:pointer;font-family:var(--fm);transition:.25s}
+.refresh:hover:not(:disabled){background:rgba(255,176,32,.12);border-color:var(--amber)}
+.refresh:disabled{opacity:.45;cursor:not-allowed}
+.refresh.spin::before{content:'⟳';display:inline-block;animation:spin 1s linear infinite;margin-inline-end:.35rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:900px){.srcboard{display:none}}
+
+.nav{position:sticky;top:34px;z-index:49;background:rgba(7,12,22,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.nav-in{display:flex;align-items:center;gap:2rem;padding:.8rem 1.4rem}
+.logo{display:flex;align-items:center;gap:.7rem}
+.logo svg{width:38px;height:38px;flex-shrink:0}
+.logo-name{font-family:var(--fd);font-weight:800;font-size:1.5rem;line-height:1.1}
+.logo-sub{font-family:var(--fm);font-size:.56rem;color:var(--amber);letter-spacing:.16em;display:block}
+.nav-links{display:flex;gap:1.8rem;margin-inline-start:auto;font-weight:500;font-size:.92rem}
+.nav-links a{position:relative;padding:.3rem 0;color:var(--muted);transition:color .25s}
+.nav-links a::after{content:'';position:absolute;bottom:0;inset-inline-start:0;width:0;height:2px;background:var(--amber);transition:width .3s}
+.nav-links a:hover{color:var(--text)}.nav-links a:hover::after{width:100%}
+.burger{display:none;background:none;border:1px solid var(--line2);color:var(--text);width:42px;height:42px;border-radius:8px;font-size:1.2rem;cursor:pointer}
+@media(max-width:900px){
+  .nav-links{display:none}.burger{display:block;margin-inline-start:auto}
+  .menu-open .nav-links{display:flex;flex-direction:column;position:absolute;top:100%;inset-inline:0;background:var(--panel);border-bottom:1px solid var(--line);padding:1.4rem;gap:1rem}
+}
+
+.ticker{display:flex;align-items:stretch;border-bottom:1px solid var(--line);background:#150a10}
+.ticker-label{background:var(--red);color:#fff;font-family:var(--fd);font-weight:700;padding:.5rem 1.2rem;display:flex;align-items:center;gap:.5rem;flex-shrink:0;font-size:.88rem}
+.ticker-label::before{content:'';width:8px;height:8px;border-radius:50%;background:#fff;animation:blink 1s infinite}
+.ticker-view{overflow:hidden;flex:1;display:flex;align-items:center}
+.ticker-track{display:flex;width:max-content;animation:tick 70s linear infinite}
+.ticker-view:hover .ticker-track{animation-play-state:paused}
+.ticker-track span{padding:.5rem 2.2rem;font-size:.83rem;color:#f3c6cb;white-space:nowrap;border-inline-end:1px solid rgba(255,77,94,.25)}
+.ticker-track b{color:var(--red);font-family:var(--fm);font-weight:600}
+@keyframes tick{to{transform:translateX(-50%)}}
+
+.opening{display:grid;grid-template-columns:1.05fr .95fr;gap:3rem;align-items:center;padding:4.2rem 0 0}
+.kicker{color:var(--amber);font-size:.78rem;letter-spacing:.08em}
+h1{font-family:var(--fd);font-weight:800;font-size:clamp(2.4rem,5vw,3.9rem);line-height:1.3;margin:.7rem 0 1rem}
+h1 .hl{color:var(--amber);position:relative;display:inline-block}
+h1 .hl::after{content:'';position:absolute;bottom:6px;inset-inline:0;height:9px;background:rgba(255,176,32,.22);z-index:-1;transform:skewX(-12deg)}
+.lead{color:var(--muted);font-size:1rem;max-width:52ch;margin-bottom:1.6rem}
+.lead b{color:var(--green)}
+.btn-row{display:flex;gap:1rem;flex-wrap:wrap}
+.btn{padding:.8rem 1.7rem;border-radius:9px;font-family:var(--fd);font-weight:700;font-size:.98rem;cursor:pointer;transition:.25s;border:none;display:inline-flex;align-items:center;gap:.5rem}
+.btn-p{background:var(--amber);color:#14100a}
+.btn-p:hover{transform:translateY(-3px);box-shadow:0 10px 30px -8px rgba(255,176,32,.5)}
+.btn-g{background:transparent;border:1px solid var(--line2);color:var(--text)}
+.btn-g:hover{border-color:var(--green);color:var(--green);transform:translateY(-3px)}
+.src-badges{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1.6rem}
+.sbadge{font-family:var(--fm);font-size:.6rem;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:.18rem .7rem;direction:ltr}
+.sbadge::before{content:'●';color:var(--green);margin-inline-end:.35rem;animation:blink 2s infinite}
+
+.term{background:#0a101d;border:1px solid var(--line2);overflow:hidden;box-shadow:0 24px 60px -20px rgba(0,0,0,.75);position:relative}
+.term::before{content:'';position:absolute;top:0;inset-inline:0;height:2px;background:linear-gradient(90deg,var(--green),var(--cyan));z-index:2}
+.term-head{display:flex;align-items:center;gap:.5rem;background:var(--panel2);padding:.6rem 1rem;border-bottom:1px solid var(--line);direction:ltr}
+.dot{width:11px;height:11px;border-radius:50%}.d1{background:#ff5f57}.d2{background:#febc2e}.d3{background:#28c840}
+.term-title{font-family:var(--fm);font-size:.7rem;color:var(--muted);margin-inline-start:auto}
+.term-body{direction:ltr;text-align:left;font-family:var(--fm);font-size:.73rem;padding:1rem 1.1rem;height:305px;overflow:hidden;display:flex;flex-direction:column;gap:.45rem;justify-content:flex-end}
+.tl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:lineIn .4s ease both}
+@keyframes lineIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.tl .ts{color:#4a5a75}
+.t-crit{color:var(--red)}.t-warn{color:var(--amber)}.t-ok{color:var(--green)}.t-info{color:var(--cyan)}
+
+/* لوحة مؤشر التهديد */
+.threatcon{margin-top:2.8rem;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line2);
+  padding:1.9rem 2.2rem;display:grid;grid-template-columns:auto 1fr;gap:2.6rem;align-items:center;position:relative}
+.threatcon::before{content:'';position:absolute;top:0;inset-inline:0;height:2px;background:linear-gradient(90deg,var(--green),var(--yellow),var(--orange),var(--red))}
+.tc-score{text-align:center;min-width:150px}
+.tc-score b{font-family:var(--fd);font-weight:800;font-size:4.4rem;line-height:1;display:block;transition:color .6s}
+.tc-lvl{display:inline-block;font-size:.74rem;font-weight:700;padding:.18rem .9rem;border-radius:99px;border:1px solid var(--line2);color:var(--muted);margin-top:.4rem;transition:.4s}
+.tc-label{font-family:var(--fm);font-size:.62rem;color:#5f6f8a;letter-spacing:.12em;display:block;margin-bottom:.3rem}
+.tc-label::before{content:'●';color:var(--green);animation:blink 1.4s infinite;margin-inline-end:.4rem}
+.segs{display:flex;gap:4px;direction:ltr;margin-bottom:.9rem}
+.segs i{flex:1;height:24px;background:#152036;transform:skewX(-14deg);border-radius:2px;transition:background .5s,box-shadow .5s}
+.tc-break{font-size:.7rem;color:#5f6f8a;display:block}
+.tc-stats{display:flex;gap:2.2rem;margin-top:1.1rem;flex-wrap:wrap}
+.tcs{border-inline-start:2px solid var(--line2);padding-inline-start:.9rem}
+.tcs b{font-family:var(--fd);font-weight:800;font-size:1.45rem;display:block;line-height:1.3}
+.tcs:nth-child(1) b{color:var(--cyan)}.tcs:nth-child(2) b{color:var(--red)}.tcs:nth-child(3) b{color:var(--orange)}
+.tcs span{font-size:.72rem;color:var(--muted)}
+@media(max-width:860px){.threatcon{grid-template-columns:1fr;gap:1.6rem}.tc-score{text-align:start}}
+
+section{padding:4.2rem 0}
+.sec-head{margin-bottom:2rem}
+.sec-row{display:flex;align-items:flex-end;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;margin-top:.4rem}
+h2{font-family:var(--fd);font-weight:800;font-size:clamp(1.6rem,3vw,2.3rem);position:relative;padding-inline-start:1.1rem}
+h2::before{content:'';position:absolute;inset-inline-start:0;top:.35em;bottom:.25em;width:5px;background:var(--amber);border-radius:3px}
+.sec-desc{color:var(--muted);max-width:54ch;font-size:.92rem}
+.live-tag{font-family:var(--fm);font-size:.64rem;color:var(--green);direction:ltr}
+.live-tag::before{content:'●';animation:blink 1.4s infinite;margin-inline-end:.4rem}
+
+.toolbar{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.6rem}
+.tabs{display:flex;gap:.4rem;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:.3rem;flex-wrap:wrap}
+.tab{background:none;border:none;color:var(--muted);padding:.45rem 1rem;border-radius:7px;cursor:pointer;font-weight:600;font-size:.85rem;transition:.25s}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--amber);color:#14100a}
+.search{margin-inline-start:auto;position:relative}
+.search input{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:.6rem 2.4rem .6rem 1rem;width:250px;font-size:.88rem;transition:.25s}
+.search input:focus{border-color:var(--amber);width:290px;outline:none}
+.search::before{content:'⌕';position:absolute;inset-inline-start:.8rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:1.1rem}
+.warn-chip{font-size:.72rem;color:var(--orange);border:1px solid rgba(255,159,67,.4);border-radius:99px;padding:.2rem .8rem}
+.notice-chip{font-size:.72rem;color:var(--yellow);border:1px solid rgba(255,209,102,.4);border-radius:99px;padding:.2rem .8rem;display:none}
+.news-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:1.25rem;display:flex;flex-direction:column;gap:.7rem;transition:transform .3s,border-color .3s,box-shadow .3s;position:relative}
+.card::before,.card::after{content:'';position:absolute;width:15px;height:15px;opacity:0;transition:.3s;pointer-events:none}
+.card::before{top:5px;inset-inline-start:5px;border-top:2px solid var(--amber);border-inline-start:2px solid var(--amber)}
+.card::after{bottom:5px;inset-inline-end:5px;border-bottom:2px solid var(--amber);border-inline-end:2px solid var(--amber)}
+.card:hover{transform:translateY(-6px);border-color:rgba(255,176,32,.45);box-shadow:0 18px 40px -16px rgba(0,0,0,.75)}
+.card:hover::before,.card:hover::after{opacity:1}
+.card.hide{display:none}
+.card-top{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.chip{font-size:.7rem;font-weight:700;padding:.18rem .7rem;border-radius:99px}
+.chip-leaks{background:rgba(56,189,248,.14);color:var(--cyan)}
+.chip-vulns{background:rgba(255,176,32,.14);color:var(--amber)}
+.chip-breaches{background:rgba(255,77,94,.14);color:var(--red)}
+.chip-malware{background:rgba(45,212,167,.14);color:var(--green)}
+.src{font-family:var(--fm);font-size:.6rem;color:var(--sc,var(--muted));direction:ltr;border:1px solid var(--line);padding:.14rem .6rem;border-radius:99px}
+.card h3{font-weight:700;font-size:.94rem;line-height:1.65}
+.card h3 a{transition:color .25s}
+.card:hover h3 a{color:var(--amber)}
+.card p{color:var(--muted);font-size:.8rem;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;line-height:1.7}
+.meta{display:flex;justify-content:space-between;gap:.6rem;color:#5f6f8a;font-size:.7rem;border-top:1px dashed var(--line);padding-top:.7rem}
+.meta a{color:var(--cyan);font-family:var(--fm);direction:ltr}
+.meta a:hover{text-decoration:underline}
+.featured{grid-column:span 2;grid-row:span 2;padding:0;overflow:hidden}
+.featured:hover{border-color:rgba(255,77,94,.5)}
+.cover{position:relative;height:270px;display:grid;place-items:center;overflow:hidden;border-bottom:1px solid var(--line);
+  background:radial-gradient(circle at 70% 40%,#1c2740,#0b1120 75%);background-size:cover;background-position:center}
+.cover::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,12,22,.1),rgba(7,12,22,.88));z-index:1}
+.urgent{position:absolute;top:1rem;inset-inline-start:1rem;background:var(--red);color:#fff;font-family:var(--fd);font-weight:700;font-size:.78rem;padding:.25rem .9rem;border-radius:6px;display:flex;align-items:center;gap:.4rem;z-index:2}
+.urgent::before{content:'';width:7px;height:7px;background:#fff;border-radius:50%;animation:blink 1s infinite}
+.featured-body{padding:1.5rem;display:flex;flex-direction:column;gap:.8rem;flex:1}
+.featured h3{font-size:1.35rem !important;line-height:1.55 !important}
+.featured p{-webkit-line-clamp:4;font-size:.9rem !important}
+@media(max-width:1000px){.news-grid{grid-template-columns:1fr 1fr}.featured{grid-column:span 2}}
+@media(max-width:640px){.news-grid{grid-template-columns:1fr}.featured{grid-column:span 1;grid-row:span 1}.search{margin:0;width:100%}.search input,.search input:focus{width:100%}}
+
+.skel{position:relative;overflow:hidden;background:var(--panel2) !important;border-radius:6px;color:transparent !important}
+.skel *{visibility:hidden}
+.skel::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);animation:shimmer 1.4s infinite}
+@keyframes shimmer{to{transform:translateX(100%)}}
+.err-panel{grid-column:1/-1;background:rgba(255,77,94,.07);border:1px dashed rgba(255,77,94,.4);border-radius:12px;padding:2rem;text-align:center;color:var(--muted)}
+.err-panel b{color:var(--red);display:block;font-family:var(--fd);font-size:1.1rem;margin-bottom:.4rem}
+.err-panel small{display:block;font-family:var(--fm);font-size:.68rem;margin-top:.5rem;direction:ltr}
+.err-panel button{margin-top:1rem;background:none;border:1px solid var(--red);color:var(--red);padding:.5rem 1.6rem;border-radius:8px;cursor:pointer;font-weight:700;transition:.25s}
+.err-panel button:hover{background:var(--red);color:#fff}
+
+.tbl-panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.legend{display:flex;gap:1.2rem;flex-wrap:wrap;padding:.9rem 1.4rem;border-bottom:1px solid var(--line);font-size:.74rem;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-inline-end:.35rem;vertical-align:middle}
+.legend .mono{margin-inline-start:auto;font-size:.64rem;color:#5f6f8a}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:820px}
+th{font-family:var(--fm);font-size:.66rem;color:var(--muted);text-align:start;padding:.85rem 1.4rem;border-bottom:1px solid var(--line);letter-spacing:.06em;text-transform:uppercase}
+td{padding:.95rem 1.4rem;border-bottom:1px solid var(--line);font-size:.86rem;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background .2s}
+tbody tr:hover{background:rgba(56,189,248,.05)}
+.cve-id{font-family:var(--fm);font-size:.78rem;direction:ltr;text-align:right}
+.cve-id a{color:var(--cyan)}.cve-id a:hover{text-decoration:underline}
+.prod small{display:block;color:var(--muted);font-size:.7rem}
+.cwe{font-family:var(--fm);font-size:.72rem;color:var(--yellow);direction:ltr;text-align:right}
+.cwe a:hover{text-decoration:underline}
+.cvss{display:flex;align-items:center;gap:.7rem}
+.cvss-bar{width:110px;height:6px;background:#1c2740;border-radius:4px;overflow:hidden}
+.cvss-bar i{display:block;height:100%;border-radius:4px;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.cvss b{font-family:var(--fm);font-size:.82rem}
+.sev{font-family:var(--fm);font-size:.62rem;padding:.18rem .6rem;border-radius:5px;direction:ltr;display:inline-block}
+.sev-crit{background:rgba(255,77,94,.15);color:var(--red);border:1px solid rgba(255,77,94,.35)}
+.sev-high{background:rgba(255,159,67,.13);color:var(--orange);border:1px solid rgba(255,159,67,.35)}
+.sev-med{background:rgba(255,209,102,.12);color:var(--yellow);border:1px solid rgba(255,209,102,.3)}
+.sev-low{background:rgba(45,212,167,.12);color:var(--green);border:1px solid rgba(45,212,167,.3)}
+.sev-na{background:#1c2740;color:var(--muted);border:1px solid var(--line)}
+.kev-badge{font-size:.6rem;font-weight:700;color:#fff;background:var(--red);border-radius:5px;padding:.12rem .5rem;margin-inline-start:.4rem;animation:blink 1.6s infinite}
+.rw-badge{font-size:.68rem;font-weight:700;color:var(--red);border:1px solid rgba(255,77,94,.4);border-radius:99px;padding:.15rem .7rem}
+.ok-badge{font-size:.68rem;font-weight:700;color:var(--green);border:1px solid rgba(45,212,167,.4);border-radius:99px;padding:.15rem .7rem}
+
+.manifest{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.mrow{display:grid;grid-template-columns:210px 1fr auto;gap:1.2rem;padding:1.05rem 1.5rem;border-bottom:1px solid var(--line);align-items:center;transition:background .2s}
+.mrow:hover{background:rgba(56,189,248,.05)}
+.mrow:last-child{border-bottom:none}
+.mname{font-family:var(--fd);font-weight:700}
+.mname small{display:block;font-family:var(--fb);font-weight:400;color:var(--muted);font-size:.72rem}
+.murl{font-size:.68rem;color:var(--cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mtake{font-size:.78rem;color:var(--muted)}
+@media(max-width:760px){.mrow{grid-template-columns:1fr}.murl{white-space:normal}}
+.method{margin-top:1.8rem;background:var(--panel);border:1px solid var(--line);border-inline-start:4px solid var(--amber);border-radius:10px;padding:1.5rem 1.8rem;color:var(--muted);font-size:.87rem}
+.method b{color:var(--text)}
+.method .mono{color:var(--amber);font-size:.72rem}
+
+footer{border-top:1px solid var(--line);background:#05080f;padding:2.6rem 0;margin-top:2rem}
+.foot-in{display:flex;justify-content:space-between;gap:1.4rem;flex-wrap:wrap;align-items:center}
+.foot-note{color:var(--muted);font-size:.8rem;max-width:62ch}
+.foot-note b{color:var(--green)}
+.foot-bottom{border-top:1px solid var(--line);margin-top:1.8rem;padding-top:1.2rem;display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;font-size:.72rem;color:#5f6f8a}
+
+.rv{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
+@media(max-width:960px){.opening{grid-template-columns:1fr;padding-top:3rem}}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow g1"></div><div class="bg-glow g2"></div>
+<div class="scanlines"></div>
+
+<div class="topbar">
+  <div class="wrap topbar-in">
+    <span class="mono live-dot">RASED://LIVE</span>
+    <span class="mono" id="utcClock">--:--:-- UTC</span>
+    <span>آخر تحديث: <span class="mono" id="lastUpdated">—</span></span>
+    <button class="refresh" id="refreshBtn" title="إعادة الجلب من جميع المصادر">تحديث ⟳</button>
+    <div class="srcboard">
+      <span class="sb wait" id="sbNvd"><i></i>NVD <em>connecting</em></span>
+      <span class="sb wait" id="sbKev"><i></i>KEV <em>connecting</em></span>
+      <span class="sb wait" id="sbRss"><i></i>RSS <em>connecting</em></span>
+    </div>
+  </div>
+</div>
+
+<header class="nav" id="header">
+  <div class="wrap nav-in">
+    <a href="#" class="logo">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l9 5v10l-9 5-9-5V7l9-5z" stroke="#ffb020" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="#2dd4a7" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="1.6" fill="#ffb020"/></svg>
+      <span><span class="logo-name">راصد</span><span class="logo-sub">LIVE THREAT INTEL · v3.1</span></span>
+    </a>
+    <nav class="nav-links">
+      <a href="#news">المستجدات</a>
+      <a href="#cves">سجل الثغرات</a>
+      <a href="#kev">الاستغلال النشط</a>
+      <a href="#sources">المصادر والمنهجية</a>
+    </nav>
+    <button class="burger" id="burger" aria-label="القائمة">☰</button>
+  </div>
+</header>
+
+<div class="ticker">
+  <div class="ticker-label">بث مباشر</div>
+  <div class="ticker-view" dir="ltr">
+    <div class="ticker-track" id="tickerTrack"><span>جارٍ الاتصال بالمصادر الحية… NVD → CIRCL mirror · CISA KEV → GitHub mirror · 10 RSS feeds</span></div>
+  </div>
+</div>
+
+<main>
+<div class="wrap">
+  <div class="opening">
+    <div class="rv">
+      <span class="kicker mono">// وحدة استخبارات التهديدات — بث حي بمسارات احتياطية</span>
+      <h1>الإنترنت لا ينام،<br>ونحن <span class="hl">نراقب</span> معه.</h1>
+      <p class="lead">كل رقم هنا يُجلب <b>من مصدره الرسمي أو مراياه الموثوقة</b> لحظة تصفّحك: قاعدة الثغرات الوطنية الأمريكية (أو مرآة CIRCL الأوروبية عند حجبها)، كتالوج الاستغلال النشط من CISA، و10 خلاصات إخبارية أمنية عالمية — عبر سباق مسارات متوازٍ يتجاوز الحجب تلقائيًا.</p>
+      <div class="btn-row">
+        <button class="btn btn-p" onclick="location.href='#news'">آخر المستجدات ↓</button>
+        <button class="btn btn-g" onclick="location.href='#kev'">⚠ المستغَلّ الآن</button>
+      </div>
+      <div class="src-badges">
+        <span class="sbadge">NVD / CIRCL</span><span class="sbadge">CISA KEV / GH-MIRROR</span>
+        <span class="sbadge">BLEEPINGCOMPUTER</span><span class="sbadge">THE HACKER NEWS</span>
+        <span class="sbadge">KREBS</span><span class="sbadge">DARK READING</span><span class="sbadge">+6 MORE</span>
+      </div>
+    </div>
+    <div class="rv">
+      <div class="term notch">
+        <div class="term-head">
+          <span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span>
+          <span class="term-title">rased@soc:~/live — happy-eyeballs router</span>
+        </div>
+        <div class="term-body" id="termBody">
+          <div class="tl"><span class="ts">[--:--:--]</span> <span class="t-info">[SYS]</span> rased intel console v3.1 — zero simulated data</div>
+          <div class="tl"><span class="ts">[--:--:--]</span> <span class="t-info">[NET]</span> 6 routes armed · first response wins</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="threatcon notch rv">
+    <div class="tc-score">
+      <span class="tc-label">GLOBAL THREAT INDEX</span>
+      <b id="stThreat" style="color:var(--muted)">–</b>
+      <span class="tc-lvl" id="thrLvl">بانتظار البيانات</span>
+    </div>
+    <div>
+      <div class="segs" id="thrSegs"></div>
+      <span class="tc-break mono" id="thrBreak">computing from live NVD + CISA KEV data…</span>
+      <div class="tc-stats">
+        <div class="tcs"><b id="stYear">—</b><span>ثغرة منشورة هذا العام <span class="mono" style="font-size:.62rem">(NVD)</span></span></div>
+        <div class="tcs"><b id="stCrit">—</b><span>منها حرجة <span class="mono" style="font-size:.62rem">CVSS ≥ 9</span></span></div>
+        <div class="tcs"><b id="stKev">—</b><span>قيد الاستغلال النشط <span class="mono" style="font-size:.62rem">(CISA KEV)</span></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="news">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="kicker mono">01 // آخر المستجدات <span class="live-tag">10 RSS FEEDS</span></span>
+      <div class="sec-row">
+        <h2>غرفة العمليات</h2>
+        <p class="sec-desc">عناوين حقيقية من 10 مصادر أمنية عالمية، تُحدَّث تلقائيًا كل 5 دقائق. المحتوى بلغته الأصلية مع رابط مباشر للمصدر.</p>
+      </div>
+    </div>
+    <div class="toolbar rv">
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-cat="all">الكل</button>
+        <button class="tab" data-cat="leaks">تسريبات</button>
+        <button class="tab" data-cat="vulns">ثغرات</button>
+        <button class="tab" data-cat="breaches">اختراقات</button>
+        <button class="tab" data-cat="malware">برمجيات خبيثة</button>
+      </div>
+      <span class="warn-chip" id="feedWarn" style="display:none"></span>
+      <div class="search"><input type="search" id="newsSearch" placeholder="ابحث في العناوين…" aria-label="بحث"></div>
+    </div>
+    <div class="news-grid" id="newsGrid"></div>
+  </div>
+</section>
+
+<section id="cves">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="kicker mono">02 // سجل الثغرات <span class="live-tag">NVD ⇄ CIRCL</span></span>
+      <div class="sec-row">
+        <h2>أحدث الثغرات المنشورة</h2>
+        <p class="sec-desc">آخر الثغرات المسجَّلة رسميًا بدرجات CVSS الحقيقية. وسم <b style="color:var(--red)">KEV</b> يعني استغلالًا فعليًا مؤكدًا وفق قائمة CISA.</p>
+      </div>
+    </div>
+    <div class="tbl-panel rv">
+      <div class="legend">
+        <span><i style="background:var(--red)"></i>حرج 9.0+</span>
+        <span><i style="background:var(--orange)"></i>مرتفع 7.0–8.9</span>
+        <span><i style="background:var(--yellow)"></i>متوسط 4.0–6.9</span>
+        <span><i style="background:var(--green)"></i>منخفض</span>
+        <span class="notice-chip" id="circlNotice">⚠ NVD محجوب — البيانات من مرآة CIRCL (لوكسمبورغ)</span>
+        <span class="mono" id="cveUpdated">source: services.nvd.nist.gov</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>CVE ID</th><th>الوصف</th><th>CWE</th><th>CVSS</th><th>الخطورة</th></tr></thead>
+          <tbody id="cveBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="kev">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="kicker mono">03 // Known Exploited Vulnerabilities <span class="live-tag">CISA ⇄ GH-MIRROR</span></span>
+      <div class="sec-row">
+        <h2>قائمة الاستغلال النشط</h2>
+        <p class="sec-desc">الثغرات التي أكدت وكالة الأمن السيبراني الأمريكية استغلالها في هجمات حقيقية — آخر الإضافات إلى الكتالوج الرسمي.</p>
+      </div>
+    </div>
+    <div class="tbl-panel rv">
+      <div class="legend">
+        <span>إجمالي الكتالوج: <b class="mono" id="kevTotal" style="color:var(--orange)">—</b></span>
+        <span>أُضيفت خلال 30 يومًا: <b class="mono" id="kev30" style="color:var(--red)">—</b></span>
+        <span class="mono" id="kevUpdated">source: cisa.gov</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>CVE ID</th><th>الجهة / المنتج</th><th>الثغرة</th><th>أُضيفت</th><th>ملاحظة</th></tr></thead>
+          <tbody id="kevBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sources">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="kicker mono">04 // الشفافية الكاملة</span>
+      <div class="sec-row">
+        <h2>سجل المصادر والمنهجية</h2>
+        <p class="sec-desc">كل بايت قابل للتتبع إلى مصدره الرسمي — تحقّق يدويًا من أي رقم في أي لحظة.</p>
+      </div>
+    </div>
+    <div class="manifest rv">
+      <div class="mrow"><span class="mname">NVD / NIST<small>قاعدة الثغرات الوطنية الأمريكية</small></span><span class="murl mono">services.nvd.nist.gov/rest/json/cves/2.0</span><span class="mtake">CVE · CVSS · إحصاءات النشر</span></div>
+      <div class="mrow"><span class="mname">CIRCL<small>مرآة احتياطية — لوكسمبورغ</small></span><span class="murl mono">cve.circl.lu · vulnerability.circl.lu</span><span class="mtake">تُستخدم تلقائيًا عند حجب NVD</span></div>
+      <div class="mrow"><span class="mname">CISA KEV<small>كتالوج الاستغلال النشط الرسمي</small></span><span class="murl mono">cisa.gov + github.com/cisagov mirror</span><span class="mtake">الثغرات المستغلة فعليًا + وسوم الفدية</span></div>
+      <div class="mrow"><span class="mname">10 خلاصات RSS<small>مصادر إخبارية أمنية عالمية</small></span><span class="murl mono">bleepingcomputer · hackernews · krebs · darkreading · cyberscoop…</span><span class="mtake">العناوين والروابط كما نُشرت</span></div>
+    </div>
+    <div class="method rv">
+      <b>كيف يعمل التوجيه؟</b> — خوارزمية Happy Eyeballs: يُجرَّب الاتصال المباشر أولًا، ثم تُطلق المسارات الوسيطة الستة تباعًا بالتوازي، وأول استجابة سليمة تفوز وتُلغى البقية. إذا حُجب المصدر الأصلي كليًا تُستخدم مرايا رسمية بديلة (CIRCL للثغرات، GitHub لكتالوج CISA). لا تخزين على أي خادم — كل شيء داخل متصفحك.
+      <br><br><b>مؤشر التهديد:</b> <span class="mono">score = min(10, 3.2 + 0.18×(حرجة/7أيام) + 0.22×(KEV/30يومًا) + 0.012×(جديدة/14يومًا))</span> — عند الاعتماد على المرآة يُوسم الناتج بأنه تقديري.
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-in">
+      <a href="#" class="logo">
+        <svg viewBox="0 0 24 24" fill="none" width="32" height="32"><path d="M12 2l9 5v10l-9 5-9-5V7l9-5z" stroke="#ffb020" stroke-width="1.6"/><circle cx="12" cy="12" r="1.6" fill="#ffb020"/></svg>
+        <span class="logo-name" style="font-size:1.15rem">راصد</span>
+      </a>
+      <p class="foot-note"><b>✓ لا توجد بيانات محاكاة.</b> كل الأرقام والأخبار مُجلبة من مصادرها الرسمية أو مراياها الموثوقة في لحظة تصفّحك، مع روابط أصلية لكل عنصر.</p>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 راصد — بيانات حية بمسارات احتياطية</span>
+      <span class="mono">CLIENT-SIDE ONLY · NOTHING STORED</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ================= أدوات عامة ================= */
+const $=id=>document.getElementById(id);
+const p=n=>String(n).padStart(2,'0');
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const clean=s=>{if(!s)return'';const d=new DOMParser().parseFromString(s,'text/html');return(d.body.textContent||'').replace(/\s+/g,' ').trim();};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function ago(d){if(!(d instanceof Date)||isNaN(d))return'';const s=(Date.now()-d)/1e3;
+  if(s<90)return'قبل لحظات';const m=s/60;if(m<60)return`منذ ${Math.floor(m)} دقيقة`;
+  const h=m/60;if(h<24)return`منذ ${Math.floor(h)} ساعة`;const dy=h/24;
+  if(dy<7)return`منذ ${Math.floor(dy)} يوم`;return d.toLocaleDateString('ar-EG');}
+function countTo(el,val){const st=performance.now();
+  (function s(n){const k=Math.min((n-st)/1300,1);
+    el.textContent=Math.round(val*(1-Math.pow(1-k,3))).toLocaleString('en-US');
+    if(k<1)requestAnimationFrame(s);})(st);}
+
+/* ================= سباق المسارات (Happy Eyeballs) =================
+   تُطلق المسارات بالتوازي مع إزاحة زمنية — أول استجابة سليمة تفوز */
+const PROXIES=[
+  ['direct',u=>u],
+  ['allorigins',u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)],
+  ['corsproxy.io',u=>'https://corsproxy.io/?url='+encodeURIComponent(u)],
+  ['codetabs',u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)],
+  ['cors.eu.org',u=>'https://cors.eu.org/'+u],
+  ['azm.workers',u=>'https://cors-anywhere.azm.workers.dev/'+u],
+];
+function raceFetch(url,{as='text',timeout=22000,stagger=1500,routes=PROXIES,onTry,validate}={}){
+  return new Promise((resolve,reject)=>{
+    const ctrs=[];let settled=false,finished=0;const errs=[];
+    const abortAll=()=>ctrs.forEach(c=>{try{c.abort()}catch(e){}});
+    const launch=i=>{
+      if(settled)return;
+      const[name,wrap]=routes[i];
+      onTry&&onTry(name);
+      const c=new AbortController();ctrs.push(c);
+      const tmo=name==='direct'?9000:timeout;
+      const t=setTimeout(()=>c.abort(),tmo);
+      fetch(wrap(url),{signal:c.signal})
+        .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return as==='json'?r.json():r.text();})
+        .then(data=>{if(validate)validate(data);
+          if(!settled){settled=true;abortAll();resolve({data,via:name});}})
+        .catch(e=>errs.push(name+': '+e.message))
+        .finally(()=>{clearTimeout(t);finished++;
+          if(!settled&&finished===routes.length)reject(new Error(errs.join(' | ')));});
+    };
+    routes.forEach((_,i)=>setTimeout(()=>launch(i),i*stagger));
+  });
+}
+
+const state={cves:[],kev:[],news:[],weekCrit:null,kev30:0,failedFeeds:[],circl:false,nvdOk:false,kevOk:false};
+
+/* ================= الساعة ================= */
+setInterval(()=>{const d=new Date();
+  $('utcClock').textContent=`${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())} UTC`;},1000);
+
+/* ================= الطرفية ================= */
+const term=$('termBody');
+function tlog(cls,tag,msg){const d=new Date();const el=document.createElement('div');el.className='tl';
+  el.innerHTML=`<span class="ts">[${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())}]</span> <span class="${cls}">[${tag}]</span> ${esc(msg)}`;
+  term.appendChild(el);while(term.children.length>10)term.removeChild(term.firstChild);}
+let termPool=[],termIdx=0;
+setInterval(()=>{if(!termPool.length)return;const it=termPool[termIdx++%termPool.length];
+  tlog(it[0],it[1],it[2]);},2600);
+
+function srcTrying(id,route){const el=$(id);el.className='sb try';el.querySelector('em').textContent='→ '+route;}
+function setSrc(id,ok,detail){const el=$(id);
+  el.className='sb '+(ok?'ok':'bad');
+  el.querySelector('em').textContent=ok?('via '+detail):'FAIL';
+  el.title=ok?('نجح عبر: '+detail):('فشل: '+detail);}
+
+/* ================= NVD + مرآة CIRCL الاحتياطية ================= */
+const NVD='https://services.nvd.nist.gov/rest/json/cves/2.0';
+const nvdOk=j=>j&&(Array.isArray(j.vulnerabilities)||typeof j.totalResults==='number');
+function parseCve(v){const c=v.cve;
+  const m=c.metrics?.cvssMetricV31?.[0]||c.metrics?.cvssMetricV40?.[0]||c.metrics?.cvssMetricV30?.[0]||c.metrics?.cvssMetricV2?.[0];
+  let score=null,sev='';
+  if(m){score=m.cvssData?.score??null;sev=(m.cvssData?.baseSeverity||m.baseSeverity||'').toString().toUpperCase();}
+  if(!sev&&score!=null)sev=score>=9?'CRITICAL':score>=7?'HIGH':score>=4?'MEDIUM':'LOW';
+  const cwe=c.weaknesses?.find(w=>w.description?.[0]?.value?.startsWith('CWE-'))?.description?.[0]?.value||'';
+  const desc=clean(c.descriptions?.find(d=>d.lang==='en')?.value||'');
+  return{id:c.id,score,sev,cwe,desc,pub:c.published};}
+/* محلل متسامح لصيغ CIRCL (القديمة والجديدة) */
+function parseAny(v){
+  if(v.cve)return parseCve(v);
+  const id=v.id||'';
+  let score=null,sev='';
+  const mtr=v.containers?.cna?.metrics?.[0];
+  if(typeof v.cvss==='number')score=v.cvss;
+  else if(mtr){const cd=mtr.cvssV31||mtr.cvssV40||mtr.cvssV30;score=cd?.baseScore??null;sev=(cd?.baseSeverity||'').toString().toUpperCase();}
+  if(score==null&&v.metrics?.cvssMetricV31?.[0])score=v.metrics.cvssMetricV31[0].cvssData?.score;
+  if(!sev&&score!=null)sev=score>=9?'CRITICAL':score>=7?'HIGH':score>=4?'MEDIUM':'LOW';
+  let cwe=(typeof v.cwe==='string'&&v.cwe.startsWith('CWE-'))?v.cwe
+    :(v.containers?.cna?.problemTypes?.[0]?.descriptions?.[0]?.cweId||'');
+  const desc=clean(v.summary||v.containers?.cna?.descriptions?.[0]?.value||'');
+  const pub=v.Published||v.datePublished||v.published||'';
+  return{id,score,sev,cwe,desc,pub};}
+async function loadNvd(){
+  const now=new Date(),d14=new Date(now-14*864e5),d7=new Date(now-7*864e5),
+        jan1=new Date(Date.UTC(now.getUTCFullYear(),0,1));
+  const P=d=>d.toISOString().slice(0,19)+'.000';
+  const q=pr=>NVD+'?'+new URLSearchParams(pr);
+  const onTry=r=>srcTrying('sbNvd',r);
+  const a=await raceFetch(q({resultsPerPage:'40',pubStartDate:P(d14),pubEndDate:P(now)}),
+    {as:'json',validate:nvdOk,onTry});
+  await wait(650);
+  const b=await raceFetch(q({resultsPerPage:'1',pubStartDate:P(jan1),pubEndDate:P(now)}),
+    {as:'json',validate:nvdOk,onTry});
+  await wait(650);
+  const c=await raceFetch(q({resultsPerPage:'1',pubStartDate:P(jan1),pubEndDate:P(now),cvssV3Severity:'CRITICAL'}),
+    {as:'json',validate:nvdOk,onTry});
+  await wait(650);
+  const d=await raceFetch(q({resultsPerPage:'1',pubStartDate:P(d7),pubEndDate:P(now),cvssV3Severity:'CRITICAL'}),
+    {as:'json',validate:nvdOk,onTry});
+  state.cves=a.data.vulnerabilities.map(parseCve).sort((x,y)=>y.pub.localeCompare(x.pub));
+  state.yearTotal=b.data.totalResults;state.yearCrit=c.data.totalResults;state.weekCrit=d.data.totalResults;
+  state.nvdOk=true;state.circl=false;
+  return a.via;
+}
+/* البديل الأوروبي عند حجب NVD كليًا */
+async function loadCircl(){
+  const eps=['https://cve.circl.lu/api/last/50','https://vulnerability.circl.lu/api/recent/'];
+  let arr=[],via='';
+  for(const ep of eps){
+    try{const r=await raceFetch(ep,{as:'json',timeout:25000,
+        onTry:rt=>srcTrying('sbNvd','CIRCL→'+rt)});
+      arr=Array.isArray(r.data)?r.data:(r.data?.vulnerabilities||[]);
+      via='CIRCL ('+r.via+')';if(arr.length)break;}catch(e){}
+  }
+  if(!arr.length)throw new Error('NVD and CIRCL mirrors unreachable');
+  const wk=Date.now()-7*864e5;
+  state.cves=arr.map(parseAny).filter(x=>x.id)
+    .sort((x,y)=>(y.pub||'').localeCompare(x.pub||''));
+  state.weekCrit=state.cves.filter(x=>x.score>=9&&new Date(x.pub).getTime()>=wk).length;
+  state.yearTotal=null;state.yearCrit=null;state.circl=true;
+  return via;
+}
+
+/* ================= CISA KEV + مرآة GitHub ================= */
+const KEV_URL='https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json';
+const GH_KEV='https://raw.githubusercontent.com/cisagov/known-exploited-vulnerabilities/main/known_exploited_vulnerabilities.json';
+const KEV_ROUTES=[
+  ['cisa.gov',u=>u],
+  ['gh-mirror',()=>GH_KEV],
+  ['allorigins',u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)],
+  ['corsproxy.io',u=>'https://corsproxy.io/?url='+encodeURIComponent(u)],
+  ['codetabs',u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)],
+  ['cors.eu.org',u=>'https://cors.eu.org/'+u],
+];
+async function loadKev(){
+  const r=await raceFetch(KEV_URL,{as:'json',
+    validate:j=>Array.isArray(j.vulnerabilities)&&j.vulnerabilities.length>0,
+    routes:KEV_ROUTES,onTry:rt=>srcTrying('sbKev',rt)});
+  state.kev=r.data.vulnerabilities;
+  const cut=new Date(Date.now()-30*864e5).toISOString().slice(0,10);
+  state.kev30=state.kev.filter(k=>k.dateAdded>=cut).length;
+  state.kevOk=true;
+  return r.via;
+}
+
+/* ================= الأخبار RSS (10 مصادر) ================= */
+const FEEDS=[
+ {n:'The Hacker News',u:'https://feeds.feedburner.com/TheHackersNews',c:'#38bdf8'},
+ {n:'BleepingComputer',u:'https://www.bleepingcomputer.com/feed/',c:'#ff9f43'},
+ {n:'SecurityWeek',u:'https://www.securityweek.com/feed/',c:'#2dd4a7'},
+ {n:'Krebs on Security',u:'https://krebsonsecurity.com/feed/',c:'#ff4d5e'},
+ {n:'The Record',u:'https://therecord.media/feed',c:'#ffd166'},
+ {n:'Dark Reading',u:'https://www.darkreading.com/rss.xml',c:'#e2e8f0'},
+ {n:'Help Net Security',u:'https://www.helpnetsecurity.com/feed/',c:'#60a5fa'},
+ {n:'CyberScoop',u:'https://www.cyberscoop.com/feed/',c:'#fb7185'},
+ {n:'Ars Technica Sec',u:'https://feeds.arstechnica.com/arstechnica/security',c:'#fdba74'},
+ {n:'CISA Advisories',u:'https://www.cisa.gov/cybersecurity-advisories/all.xml',c:'#93c5fd'}
+];
+function parseFeed(txt,f){
+  const doc=new DOMParser().parseFromString(txt,'text/xml');
+  if(doc.querySelector('parsererror'))throw new Error('XML parse error');
+  let items=[...doc.querySelectorAll('item')];
+  if(!items.length)items=[...doc.querySelectorAll('entry')];
+  return items.slice(0,10).map(it=>{
+    const q=t=>it.getElementsByTagName(t)[0]?.textContent?.trim()||'';
+    let link=q('link');
+    if(!link){const l=it.querySelector('link');link=l?.getAttribute?.('href')||l?.textContent?.trim()||'';}
+    const descRaw=q('description')||q('summary')||'';
+    let img='';
+    const mc=it.getElementsByTagName('media:content')[0]||it.getElementsByTagName('media:thumbnail')[0];
+    if(mc?.getAttribute('url'))img=mc.getAttribute('url');
+    const enc=it.querySelector('enclosure');
+    if(!img&&enc&&(enc.getAttribute('type')||'').startsWith('image'))img=enc.getAttribute('url');
+    if(!img){const m=descRaw.match(/<img[^>]+src=["']([^"']+)["']/);if(m)img=m[1];}
+    return{title:clean(q('title')),link,date:new Date(q('pubDate')||q('updated')||q('dc:date')),
+      desc:clean(descRaw).slice(0,180),img,source:f.n,color:f.c};
+  }).filter(x=>x.title&&x.link);
+}
+async function loadNews(){
+  const res=await Promise.allSettled(FEEDS.map(f=>
+    raceFetch(f.u,{as:'text',timeout:16000,stagger:1200}).then(r=>({items:parseFeed(r.data,f),route:r.via}))));
+  const ok=[],failed=[];
+  res.forEach((r,i)=>{if(r.status==='fulfilled'&&r.value.items.length)ok.push(...r.value.items);
+    else failed.push(FEEDS[i].n);});
+  state.news=ok.sort((a,b)=>b.date-a.date);
+  state.failedFeeds=failed;
+  return res.filter(r=>r.status==='fulfilled').length+'/'+FEEDS.length;
+}
+
+/* ================= العرض ================= */
+const CAT_AR={leaks:'تسريبات',vulns:'ثغرات',breaches:'اختراقات',malware:'برمجيات خبيثة'};
+function categorize(t){const s=t.toLowerCase();
+  if(/\b(leak(ed|s)?|exposed|data ?dump|million records|billion records|records exposed)\b/.test(s))return'leaks';
+  if(/\b(ransomware|malware|trojan|botnet|spyware|backdoor|worm|infostealer)\b/.test(s))return'malware';
+  if(/\b(cve|vulnerabilit|zero-?day|patch|flaw|exploit|rce|xss|injection|updates? fix)\b/.test(s))return'vulns';
+  return'breaches';}
+function renderNews(){
+  const g=$('newsGrid');
+  if(!state.news.length){
+    g.innerHTML=`<div class="err-panel"><b>تعذر الوصول إلى كل الخلاصات الإخبارية</b>
+      تحقق من اتصال الإنترنت أو أعد المحاولة بعد دقيقة.
+      <small>${esc(state.failedFeeds.join(' · '))}</small><br>
+      <button onclick="refreshAll()">إعادة المحاولة ⟳</button></div>`;return;}
+  const items=state.news.slice(0,13);
+  g.innerHTML=items.map((it,i)=>{
+    const cat=categorize(it.title+' '+(it.desc||''));
+    const txt=esc((it.title+' '+(it.desc||'')+' '+it.source).toLowerCase());
+    if(i===0)return`<article class="card featured" data-cat="${cat}" data-txt="${txt}">
+      <div class="cover" ${it.img?`style="background-image:url('${esc(it.img)}')"`:''}>
+        <span class="urgent">الأحدث الآن</span></div>
+      <div class="featured-body">
+        <div class="card-top"><span class="chip chip-${cat}">${CAT_AR[cat]}</span>
+          <span class="src" style="--sc:${it.color}">${esc(it.source)}</span></div>
+        <h3 class="en"><a href="${esc(it.link)}" target="_blank" rel="noopener">${esc(it.title)}</a></h3>
+        <p class="en">${esc(it.desc)}</p>
+        <div class="meta"><span>${ago(it.date)}</span><a href="${esc(it.link)}" target="_blank" rel="noopener">READ ORIGINAL ↗</a></div>
+      </div></article>`;
+    return`<article class="card" data-cat="${cat}" data-txt="${txt}">
+      <div class="card-top"><span class="chip chip-${cat}">${CAT_AR[cat]}</span>
+        <span class="src" style="--sc:${it.color}">${esc(it.source)}</span></div>
+      <h3 class="en"><a href="${esc(it.link)}" target="_blank" rel="noopener">${esc(it.title)}</a></h3>
+      <p class="en">${esc(it.desc)}</p>
+      <div class="meta"><span>${ago(it.date)}</span><a href="${esc(it.link)}" target="_blank" rel="noopener">READ ORIGINAL ↗</a></div>
+    </article>`;}).join('');
+  document.querySelectorAll('.tab').forEach(t=>{const c=t.dataset.cat;
+    const n=c==='all'?state.news.length:state.news.filter(x=>categorize(x.title+' '+(x.desc||''))===c).length;
+    t.textContent=(c==='all'?'الكل':CAT_AR[c])+` (${n})`;});
+  const w=$('feedWarn');
+  if(state.failedFeeds.length){w.style.display='';w.textContent='⚠ تعذر: '+state.failedFeeds.join('، ');}
+  else w.style.display='none';
+  applyFilter();
+}
+let activeCat='all';
+function applyFilter(){const q=$('newsSearch').value.trim().toLowerCase();
+  document.querySelectorAll('#newsGrid .card').forEach(c=>{
+    const okC=activeCat==='all'||c.dataset.cat===activeCat;
+    const okQ=!q||(c.dataset.txt||'').includes(q);
+    c.classList.toggle('hide',!(okC&&okQ));});}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelector('.tab.active').classList.remove('active');
+  t.classList.add('active');activeCat=t.dataset.cat;applyFilter();}));
+$('newsSearch').addEventListener('input',applyFilter);
+
+const SEV_CLS={CRITICAL:'sev-crit',HIGH:'sev-high',MEDIUM:'sev-med',LOW:'sev-low'};
+const SEV_BAR={CRITICAL:'var(--red)',HIGH:'var(--orange)',MEDIUM:'var(--yellow)',LOW:'var(--green)'};
+function renderCves(){
+  const b=$('cveBody');const kevSet=new Set(state.kev.map(k=>k.cveID));
+  $('circlNotice').style.display=state.circl?'':'none';
+  if(!state.cves.length){
+    b.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">
+      تعذر الاتصال بـ NVD وكل المرايا — <a href="#" onclick="refreshAll();return false" style="color:var(--cyan)">إعادة المحاولة ⟳</a></td></tr>`;return;}
+  b.innerHTML=state.cves.slice(0,12).map(c=>{
+    const w=c.score!=null?c.score*10:0;
+    return`<tr>
+      <td class="cve-id"><a href="https://nvd.nist.gov/vuln/detail/${c.id}" target="_blank" rel="noopener">${c.id}</a></td>
+      <td class="prod"><span class="en" style="display:block;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.desc)}">${esc(c.desc)||'—'}</span>
+        <small>نُشرت: ${c.pub?new Date(c.pub).toLocaleDateString('ar-EG'):'—'}</small></td>
+      <td class="cwe">${c.cwe&&c.cwe.includes('-')?`<a href="https://cwe.mitre.org/data/definitions/${c.cwe.split('-')[1]}.html" target="_blank" rel="noopener">${c.cwe}</a>`:'—'}</td>
+      <td><div class="cvss"><div class="cvss-bar"><i style="width:${w}%;background:${SEV_BAR[c.sev]||'#475569'}"></i></div>
+        <b style="color:${SEV_BAR[c.sev]||'var(--muted)'}">${c.score!=null?c.score.toFixed(1):'N/A'}</b></div></td>
+      <td><span class="sev ${SEV_CLS[c.sev]||'sev-na'}">${c.sev||'PENDING'}</span>
+        ${kevSet.has(c.id)?'<span class="kev-badge">KEV ⚠</span>':''}</td></tr>`;}).join('');
+  $('cveUpdated').textContent=state.circl
+    ?'source: CIRCL mirror (LU) · synced '+new Date().toUTCString().slice(17,25)+' UTC'
+    :'source: services.nvd.nist.gov · synced '+new Date().toUTCString().slice(17,25)+' UTC';
+}
+function renderKev(){
+  const b=$('kevBody');
+  if(!state.kev.length){
+    b.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">
+      تعذر الوصول إلى CISA ومرآة GitHub — <a href="#" onclick="refreshAll();return false" style="color:var(--cyan)">إعادة المحاولة ⟳</a></td></tr>`;return;}
+  $('kevTotal').textContent=state.kev.length.toLocaleString('en-US');
+  $('kev30').textContent='+'+state.kev30;
+  b.innerHTML=state.kev.slice(-8).reverse().map(k=>`<tr>
+    <td class="cve-id"><a href="https://nvd.nist.gov/vuln/detail/${k.cveID}" target="_blank" rel="noopener">${k.cveID}</a></td>
+    <td class="prod"><b>${esc(k.vendorProject)}</b><small>${esc(k.product)}</small></td>
+    <td><span class="en" style="display:block;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(k.vulnerabilityName)}">${esc(k.vulnerabilityName)}</span></td>
+    <td class="mono" style="font-size:.76rem">${k.dateAdded}</td>
+    <td>${k.knownRansomwareCampaignUse==='Known'?'<span class="rw-badge">🔒 فدية مؤكدة</span>':'<span class="ok-badge">تحديث إلزامي</span>'}</td></tr>`).join('');
+}
+
+/* مؤشر التهديد */
+const segsBox=$('thrSegs');
+for(let i=0;i<20;i++){const s=document.createElement('i');segsBox.appendChild(s);}
+function renderThreat(){
+  const wc=state.weekCrit??0,k30=state.kev30,r=state.cves.length;
+  if(!r&&!k30){$('stThreat').textContent='—';return;}
+  const sc=Math.round(Math.min(10,3.2+wc*0.18+k30*0.22+Math.min(1.4,r*0.012))*10)/10;
+  const[lvl,cl]=sc<4.5?['منخفض','var(--green)']:sc<6.5?['متوسط','var(--yellow)']:sc<8?['مرتفع','var(--orange)']:['حرج','var(--red)'];
+  const el=$('stThreat');el.textContent=sc.toFixed(1);el.style.color=cl;
+  const L=$('thrLvl');L.textContent=lvl+(state.circl?' · تقديري':'');L.style.color=cl;L.style.borderColor=cl;
+  [...segsBox.children].forEach((s,i)=>{
+    if(i<sc*2){const h=140-(i/19)*140;const c=`hsl(${h},80%,55%)`;s.style.background=c;s.style.boxShadow=`0 0 10px ${c}`;}
+    else{s.style.background='#152036';s.style.boxShadow='none';}});
+  $('thrBreak').textContent=state.circl
+    ?`DEGRADED MODE — CIRCL sample: ≈${wc} critical/7d · +${k30} KEV/30d · ${r} CVEs`
+    :`${wc} critical/7d · +${k30} KEV/30d · ${r} new CVEs/14d`;
+}
+
+function renderTicker(){
+  const crit=state.cves.filter(c=>c.score!=null).sort((a,b)=>b.score-a.score).slice(0,4)
+    .map(c=>`<span>⚡ <b>${c.id}</b> (${c.score.toFixed(1)}) — ${esc(c.desc.slice(0,70))}…</span>`);
+  const heads=state.news.slice(0,5).map(n=>`<span>📰 ${esc(n.source)}: ${esc(n.title.slice(0,70))}</span>`);
+  const all=[...crit,...heads];if(!all.length)return;
+  const t=$('tickerTrack');t.innerHTML=all.join('');t.innerHTML+=t.innerHTML;
+}
+function buildTermPool(){
+  termPool=[];
+  state.cves.slice(0,15).forEach(c=>termPool.push([
+    c.sev==='CRITICAL'?'t-crit':c.sev==='HIGH'?'t-warn':'t-info','CVE',
+    `${c.id} · CVSS ${c.score!=null?c.score.toFixed(1):'—'} · ${c.desc.slice(0,58)}`]));
+  state.news.slice(0,8).forEach(n=>termPool.push(['t-info','FEED',`${n.source}: ${n.title.slice(0,62)}`]));
+  state.kev.slice(-5).forEach(k=>termPool.push(['t-crit','KEV',`${k.cveID} actively exploited — ${k.vendorProject} ${k.product}`]));
+}
+function showSkeletons(){
+  $('newsGrid').innerHTML=Array(8).fill('<div class="card skel" style="min-height:180px">&nbsp;</div>').join('');
+  $('cveBody').innerHTML=Array(6).fill('<tr><td class="skel">CVE</td><td class="skel">d</td><td class="skel">c</td><td class="skel">s</td><td class="skel">v</td></tr>').join('');
+  $('kevBody').innerHTML=Array(5).fill('<tr><td class="skel">CVE</td><td class="skel">v</td><td class="skel">n</td><td class="skel">d</td><td class="skel">s</td></tr>').join('');
+}
+
+/* ================= التحميل الرئيسي ================= */
+async function refreshAll(){
+  const btn=$('refreshBtn');btn.disabled=true;btn.classList.add('spin');
+  ['sbNvd','sbKev','sbRss'].forEach(id=>{$(id).className='sb wait';$(id).querySelector('em').textContent='connecting';});
+  showSkeletons();
+  tlog('t-info','SYS','refresh initiated — happy-eyeballs racing across 6 routes…');
+  await Promise.all([
+    (async()=>{const t0=performance.now();
+      try{const via=await loadNvd();
+        setSrc('sbNvd',true,via);tlog('t-ok','NET',`NVD ✓ via ${via} · ${Math.round(performance.now()-t0)}ms`);}
+      catch(e){
+        try{const via=await loadCircl();
+          setSrc('sbNvd',true,via);tlog('t-warn','NET',`NVD blocked → CIRCL mirror ✓ · ${Math.round(performance.now()-t0)}ms`);}
+        catch(e2){setSrc('sbNvd',false,'all routes');tlog('t-crit','NET','NVD+CIRCL ✗ '+e2.message);}}})(),
+    (async()=>{const t0=performance.now();
+      try{const via=await loadKev();
+        setSrc('sbKev',true,via);tlog('t-ok','NET',`CISA KEV ✓ via ${via} · ${state.kev.length} entries · ${Math.round(performance.now()-t0)}ms`);}
+      catch(e){setSrc('sbKev',false,'all routes');tlog('t-crit','NET','KEV ✗ '+e.message);}})(),
+    (async()=>{const t0=performance.now();
+      try{const ok=await loadNews();
+        setSrc('sbRss',true,ok+' feeds');tlog('t-ok','NET',`RSS ✓ ${ok} feeds · ${Math.round(performance.now()-t0)}ms`);}
+      catch(e){setSrc('sbRss',false,'all routes');tlog('t-crit','NET','RSS ✗ '+e.message);}})()
+  ]);
+  renderNews();renderCves();renderKev();renderThreat();renderTicker();buildTermPool();
+  if(state.nvdOk){countTo($('stYear'),state.yearTotal||0);countTo($('stCrit'),state.yearCrit||0);}
+  else{$('stYear').textContent='—';$('stCrit').textContent='—';}
+  state.kevOk?countTo($('stKev'),state.kev.length):$('stKev').textContent='—';
+  $('lastUpdated').textContent=new Date().toUTCString().slice(17,25)+' UTC';
+  btn.classList.remove('spin');
+  let cd=30;btn.textContent=`انتظر ${cd}ث`;
+  const iv=setInterval(()=>{cd--;if(cd<=0){clearInterval(iv);btn.disabled=false;btn.textContent='تحديث ⟳';}
+    else btn.textContent=`انتظر ${cd}ث`;},1000);
+}
+$('refreshBtn').addEventListener('click',refreshAll);
+
+setInterval(async()=>{try{await loadNews();renderNews();renderTicker();buildTermPool();
+  $('lastUpdated').textContent=new Date().toUTCString().slice(17,25)+' UTC (feeds)';
+  tlog('t-ok','NET','RSS feeds auto-refreshed ✓');}catch(e){}},300000);
+
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+
+$('burger').addEventListener('click',()=>$('header').classList.toggle('menu-open'));
+document.querySelectorAll('.nav-links a').forEach(a=>a.addEventListener('click',()=>$('header').classList.remove('menu-open')));
+
+tlog('t-info','SYS','rased intel console v3.1 — boot sequence complete');
+refreshAll();
+</script>
+</body>
+</html>
