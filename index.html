@@ -867,6 +867,26 @@ $('burger').addEventListener('click',()=>$('header').classList.toggle('menu-open
 document.querySelectorAll('.nav-links a').forEach(a=>a.addEventListener('click',()=>$('header').classList.remove('menu-open')));
 
 tlog('t-info','SYS','rased intel console v3.2 — boot sequence complete');
+  /* ===== v3.2.1 patch: إصلاح تحليل صيغة CVE 5.0 من CIRCL ===== */
+function parseAny(v){
+  if(v.cve)return parseCve(v);
+  const meta=v.cveMetadata||{};
+  const id=v.id||meta.cveId||'';
+  const cna=v.containers?.cna||{};
+  let score=null,sev='';
+  const mtr=(cna.metrics||[])[0]||{};
+  const cd=mtr.cvssV3_1||mtr.cvssV4_0||mtr.cvssV3_0||mtr.cvssV31||mtr.cvssV40||mtr.cvssV30;
+  if(typeof v.cvss==='number')score=v.cvss;
+  else if(cd){score=cd.baseScore??null;sev=(cd.baseSeverity||'').toString().toUpperCase();}
+  if(score==null&&v.metrics?.cvssMetricV31?.[0])score=v.metrics.cvssMetricV31[0].cvssData?.score;
+  if(!sev&&score!=null)sev=score>=9?'CRITICAL':score>=7?'HIGH':score>=4?'MEDIUM':'LOW';
+  const pt=(cna.problemTypes||[])[0];
+  const rawCwe=v.cwe||pt?.descriptions?.[0]?.cweId||pt?.descriptions?.[0]?.description||'';
+  const cwe=(typeof rawCwe==='string'&&rawCwe.startsWith('CWE-'))?rawCwe:'';
+  const desc=clean(v.summary||cna.descriptions?.[0]?.value||'');
+  const pub=meta.datePublished||v.datePublished||v.Published||v.published||'';
+  return{id,score,sev,cwe,desc,pub};
+}
 refreshAll();
 </script>
 </body>
